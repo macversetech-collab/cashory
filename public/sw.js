@@ -4,7 +4,7 @@
  *   and a slow or missing connection falls back to the saved copy.
  * - Supabase calls (another origin) are never cached; the app keeps its own copy of your data.
  */
-const STATIC = 'cashory-static-v2';
+const STATIC = 'cashory-static-v3';
 const PAGES = 'cashory-pages-v1';
 const TIMEOUT = 3000;
 const MAX_STATIC = 80;
@@ -62,7 +62,9 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
   if (req.mode === 'navigate') return event.respondWith(networkFirstPage(req));
-  if (url.pathname.includes('/assets/') || url.pathname.includes('/logos/') || /\.(png|svg|webmanifest)$/.test(url.pathname)) {
+  // App code and bank logos only. Home Screen icons and the manifest are left to the browser,
+  // so iOS always fetches them straight from the server when adding the app.
+  if (url.pathname.startsWith('/assets/') || url.pathname.startsWith('/logos/')) {
     event.respondWith(cacheFirst(req));
   }
 });
