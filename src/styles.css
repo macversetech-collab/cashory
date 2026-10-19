@@ -2365,5 +2365,11 @@ b {
 .cat-card .dot {
   width: 10px;
   height: 10px;
+  /* room for the ring: .cat-name clips its overflow for long names */
+  margin: 3px 1px 3px 3px;
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--cat) 26%, transparent);
+}
+.cat-card .cat-name {
+  gap: 6px;
+  margin-left: -3px;
 }
