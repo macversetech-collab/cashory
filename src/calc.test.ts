@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import type { DB, Entry } from './types';
-import { ALL_TIME, accountTotals, balancesNow, categoryTotals, monthRange, months, noteSuggestions, noteTotals, running, summary } from './calc';
+import { ALL_TIME, accountTotals, balancesNow, categoryTotals, monthRange, months, noteSuggestions, noteTotals, running, statement, summary } from './calc';
+import { addMonths, monthKey } from './format';
 import { parseImport } from './store';
 
 function e(p: Partial<Entry> & Pick<Entry, 'id' | 'date' | 'type' | 'amount' | 'categoryId' | 'accountId'>): Entry {
@@ -74,6 +75,31 @@ describe('balances', () => {
   });
 });
 
+
+describe('month statement', () => {
+  const oct = monthRange('2026-10');
+  it('category: opening + In − Out ± moves = closing, entries split by kind', () => {
+    const st = statement(base, oct, { categoryId: 'show' });
+    expect(st.totals.start).toBe(1100);
+    expect(st.ins.map((x) => x.id)).toEqual([]);
+    expect(st.outs.map((x) => x.id)).toEqual(['2', '3']);
+    expect(st.moves).toEqual([{ entry: base.entries[3], delta: -90 }]);
+    const t = st.totals;
+    expect(t.start + t.in - t.out + t.movedIn - t.movedOut).toBe(t.end);
+    expect(t.end).toBe(510);
+  });
+  it('account: only entries booked to it; moves inside one account are left out', () => {
+    const inside: DB = { ...base, entries: [...base.entries, e({ id: '6', date: '2026-10-07', type: 'move', amount: 40, categoryId: 'show', accountId: 'kbz', toCategoryId: 'fund', toAccountId: 'kbz' })] };
+    const st = statement(inside, oct, { accountId: 'kbz' });
+    expect(st.outs.map((x) => x.id)).toEqual(['2']);
+    expect(st.moves.map((m) => [m.entry.id, m.delta])).toEqual([['4', -90]]);
+    const t = st.totals;
+    expect(t.start + t.in - t.out + t.movedIn - t.movedOut).toBe(t.end);
+    const cash = statement(inside, oct, { accountId: 'cash' });
+    expect(cash.moves.map((m) => [m.entry.id, m.delta])).toEqual([['4', 90]]);
+  });
+});
+
 const file = new URL('../data/cashory-import.json', import.meta.url);
 describe.skipIf(!existsSync(file))('real data from the Numbers file', () => {
   const db = parseImport(readFileSync(file, 'utf8'));
@@ -104,5 +130,26 @@ describe.skipIf(!existsSync(file))('real data from the Numbers file', () => {
     const t = categoryTotals(db, ALL_TIME).get(name('Showline'))!;
     expect(t.in).toBe(70_910_000);
     expect(t.out).toBe(73_084_450);
+  });
+  it('every month: closing = next opening, adds up, and the last closing is today\'s balance', () => {
+    const dates = db.entries.map((x) => x.date).sort();
+    const last = monthKey(dates[dates.length - 1]);
+    const targets = [...db.categories.map((c) => ({ categoryId: c.id })), ...db.accounts.map((a) => ({ accountId: a.id }))];
+    for (const tg of targets) {
+      let prevEnd: number | null = null;
+      for (let m = monthKey(dates[0]); m <= last; m = addMonths(m, 1)) {
+        const st = statement(db, monthRange(m), tg);
+        const t = st.totals;
+        const label = JSON.stringify(tg) + ' ' + m;
+        if (prevEnd !== null) expect(t.start, label).toBe(prevEnd);
+        expect(t.start + t.in - t.out + t.movedIn - t.movedOut, label).toBe(t.end);
+        expect(st.ins.reduce((s, x) => s + x.amount, 0), label).toBe(t.in);
+        expect(st.outs.reduce((s, x) => s + x.amount, 0), label).toBe(t.out);
+        expect(st.moves.reduce((s, x) => s + x.delta, 0), label).toBe(t.movedIn - t.movedOut);
+        prevEnd = t.end;
+      }
+      const now = 'categoryId' in tg ? categories.get(tg.categoryId)!.end : accounts.get(tg.accountId)!.end;
+      expect(prevEnd, JSON.stringify(tg)).toBe(now);
+    }
   });
 });

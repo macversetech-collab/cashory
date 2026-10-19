@@ -190,7 +190,7 @@ export function Reports({ query }: { query: URLSearchParams }) {
       <section className="card">
         {notes.length === 0 && <p className="empty small">No spending with a note in this period.</p>}
         {notes.map((n, i) => (
-          <a key={n.key} href={'#/entries?q=' + encodeURIComponent(n.note) + (mode === 'month' ? '&m=' + month : '')} className={'bar-row' + (i === notes.length - 1 ? ' last' : '')}>
+          <a key={n.key} href={'#/entries?q=' + encodeURIComponent(n.note) + (mode === 'month' ? '&m=' + month : '&m=all')} className={'bar-row' + (i === notes.length - 1 ? ' last' : '')}>
             <div className="bar-top">
               <span>{n.note}</span>
               <small>{n.countOut}×</small>

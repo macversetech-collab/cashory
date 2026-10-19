@@ -4,7 +4,7 @@
  *   and a slow or missing connection falls back to the saved copy.
  * - Supabase calls (another origin) are never cached; the app keeps its own copy of your data.
  */
-const STATIC = 'cashory-static-v1';
+const STATIC = 'cashory-static-v2';
 const PAGES = 'cashory-pages-v1';
 const TIMEOUT = 3000;
 const MAX_STATIC = 80;

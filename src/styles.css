@@ -2147,3 +2147,150 @@ b {
 .login-card .btn.primary {
   margin-top: 4px;
 }
+
+/* ------------------------------------------------------------------ entries = monthly statement */
+
+.stmt-lines {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 0 10px;
+}
+.stmt-line,
+.stmt-close {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.stmt-line {
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.stmt-line > span,
+.stmt-close > span {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--grad-ink2);
+}
+.stmt-line > b {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+.stmt-close {
+  margin: 10px -6px 0;
+  padding: 12px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.12);
+}
+.stmt-close > b {
+  font-size: clamp(22px, 6.4vw, 26px);
+  font-weight: 800;
+  letter-spacing: -0.6px;
+}
+
+.section-head .count {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink2);
+  background: #eef2f6;
+  border-radius: 999px;
+  padding: 2px 8px;
+  margin-left: 4px;
+  vertical-align: 2px;
+}
+.group-total {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+.group-total.in {
+  color: var(--in);
+}
+.group-total.out {
+  color: var(--out);
+}
+.group-total.move {
+  color: var(--ink2);
+}
+
+.st-row {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--sep);
+  text-align: left;
+  color: var(--ink);
+}
+.st-row.last {
+  border-bottom: none;
+}
+.st-row:active {
+  opacity: 0.6;
+}
+.st-top,
+.st-sub {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.st-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.st-name b {
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.st-name .tag {
+  align-self: center;
+  font-size: 10px;
+  padding: 1px 7px;
+}
+.st-name .acc-logo {
+  margin-left: 0;
+}
+.st-end {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+}
+.st-end.out {
+  color: var(--out);
+}
+.st-sub {
+  font-size: 12px;
+  color: var(--ink2);
+  font-weight: 500;
+}
+.st-sub > span:last-child {
+  display: inline-flex;
+  gap: 8px;
+  white-space: nowrap;
+}
+.st-sub em {
+  font-style: normal;
+  font-weight: 700;
+}
+.st-sub em.in {
+  color: var(--in);
+}
+.st-sub em.out {
+  color: var(--out);
+}
+.st-sub em.mv {
+  color: var(--ink2);
+}
+.link-btn.small.center {
+  align-self: center;
+  font-size: 14px;
+}

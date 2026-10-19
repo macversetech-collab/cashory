@@ -7,18 +7,22 @@ interface Props {
   entry: Entry;
   /** When shown inside a category, the sign of a move follows that category. */
   categoryId?: string;
+  /** Inside an account statement, the sign of a move follows that account. */
+  accountId?: string;
   balanceAfter?: number;
   showDate?: boolean;
   last?: boolean;
 }
 
-export function EntryRow({ db, entry: e, categoryId, balanceAfter, showDate, last }: Props) {
+export function EntryRow({ db, entry: e, categoryId, accountId, balanceAfter, showDate, last }: Props) {
   const { openSheet, hide } = useUI();
   const cat = (id: string | null) => db.categories.find((c) => c.id === id)?.name ?? '—';
   const acc = (id: string | null) => db.accounts.find((a) => a.id === id)?.name ?? '—';
 
   let delta = e.type === 'in' ? e.amount : -e.amount;
   if (e.type === 'move' && categoryId && e.toCategoryId === categoryId) delta = e.amount;
+  if (e.type === 'move' && !categoryId && accountId && e.toAccountId === accountId) delta = e.amount;
+  const signedMove = !!(categoryId || accountId);
   const kind = e.type === 'move' ? 'move' : e.type;
   const badge = e.type === 'move' ? '⇄' : e.type === 'in' ? '+' : '−';
 
@@ -34,8 +38,8 @@ export function EntryRow({ db, entry: e, categoryId, balanceAfter, showDate, las
     parts.push(acc(e.accountId));
   }
 
-  const amountText = hide ? '•••••' : e.type === 'move' && !categoryId ? e.amount.toLocaleString('en-US') : signed(delta);
-  const color = e.type === 'move' && !categoryId ? 'var(--muted)' : delta > 0 ? 'var(--in)' : 'var(--out)';
+  const amountText = hide ? '•••••' : e.type === 'move' && !signedMove ? e.amount.toLocaleString('en-US') : signed(delta);
+  const color = e.type === 'move' && !signedMove ? 'var(--muted)' : delta > 0 ? 'var(--in)' : 'var(--out)';
 
   return (
     <button type="button" className={'entry-row' + (last ? ' last' : '')} onClick={() => openSheet({ entryId: e.id })}>

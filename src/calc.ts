@@ -247,6 +247,49 @@ export function running(db: DB, cat: Category): RunningRow[] {
   return rows;
 }
 
+export interface StatementMove {
+  entry: Entry;
+  /** + money came into this category/account, − it left. */
+  delta: number;
+}
+
+export interface Statement {
+  totals: Totals;
+  ins: Entry[];
+  outs: Entry[];
+  moves: StatementMove[];
+}
+
+/**
+ * One category's or one account's statement for a range: opening, In, Out, moves, closing.
+ * Moves that stay inside the same account do not change that account and are left out of
+ * an account statement (their two halves cancel in the totals as well).
+ */
+export function statement(db: DB, r: Range, target: { categoryId: string } | { accountId: string }): Statement {
+  const isCat = 'categoryId' in target;
+  const id = isCat ? target.categoryId : target.accountId;
+  const totals = (isCat ? categoryTotals(db, r) : accountTotals(db, r)).get(id) ?? emptyTotals();
+  const ins: Entry[] = [];
+  const outs: Entry[] = [];
+  const moves: StatementMove[] = [];
+  const es = liveEntries(db)
+    .filter((e) => inRange(e.date, r))
+    .sort(byDateAsc);
+  for (const e of es) {
+    if (e.type === 'move') {
+      const delta = linesOf(e)
+        .filter((l) => (isCat ? l.categoryId : l.accountId) === id)
+        .reduce((s, l) => s + l.delta, 0);
+      const touches = isCat ? e.categoryId === id || e.toCategoryId === id : delta !== 0;
+      if (touches) moves.push({ entry: e, delta });
+      continue;
+    }
+    if ((isCat ? e.categoryId : e.accountId) !== id) continue;
+    (e.type === 'in' ? ins : outs).push(e);
+  }
+  return { totals, ins, outs, moves };
+}
+
 export function entryCountFor(db: DB, opts: { categoryId?: string; accountId?: string }): number {
   return liveEntries(db).filter((e) =>
     opts.categoryId ? e.categoryId === opts.categoryId || e.toCategoryId === opts.categoryId : e.accountId === opts.accountId || e.toAccountId === opts.accountId,
