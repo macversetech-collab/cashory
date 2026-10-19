@@ -1,5 +1,29 @@
 /* Cashory — Proflo design language (clean light iOS) with the Cashory green gradient on hero cards */
 
+/* Numbers: Roboto Mono, digits and number signs only (2 KB each). Letters in the same text
+   fall through to the iPhone font, so "From 1,250,000" mixes cleanly. */
+@font-face {
+  font-family: 'Cashory Num';
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/cashory-num-500.woff2') format('woff2');
+  unicode-range: U+0030-0039, U+002B-002E, U+003A, U+2212, U+2022, U+2013;
+}
+@font-face {
+  font-family: 'Cashory Num';
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/cashory-num-600.woff2') format('woff2');
+  unicode-range: U+0030-0039, U+002B-002E, U+003A, U+2212, U+2022, U+2013;
+}
+@font-face {
+  font-family: 'Cashory Num';
+  font-weight: 700 900;
+  font-display: swap;
+  src: url('/fonts/cashory-num-700.woff2') format('woff2');
+  unicode-range: U+0030-0039, U+002B-002E, U+003A, U+2212, U+2022, U+2013;
+}
+
 :root {
   --bg: #f8fafc;
   --card: #ffffff;
@@ -22,6 +46,8 @@
   --shadow: 0 4px 20px -2px rgba(79, 70, 229, 0.06), 0 2px 6px -1px rgba(0, 0, 0, 0.03);
   --safe-top: 0px;
   --safe-bottom: 0px;
+  --num: 'Cashory Num', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, 'SF Mono', Menlo, 'Roboto Mono', monospace;
   --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   color-scheme: light;
 }
@@ -403,9 +429,8 @@ b {
   --cat: #b5d86a;
   position: relative;
   overflow: hidden;
-  background: #fff;
-  background: color-mix(in srgb, var(--cat) 13%, #fff);
-  border: 1px solid color-mix(in srgb, var(--cat) 30%, #fff);
+  background: var(--card);
+  border: 1px solid var(--line);
   border-radius: 20px;
   padding: 13px 14px 12px;
   display: flex;
@@ -2088,8 +2113,11 @@ b {
 .login {
   min-height: 100vh;
   min-height: 100dvh;
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
   padding: 24px 16px calc(24px + var(--safe-bottom));
   background: radial-gradient(70% 50% at 50% 0%, rgba(53, 127, 111, 0.12), rgba(53, 127, 111, 0) 70%), var(--bg);
 }
@@ -2293,4 +2321,49 @@ b {
 .link-btn.small.center {
   align-self: center;
   font-size: 14px;
+}
+
+
+/* ------------------------------------------------------------------ numbers, build line, category dots */
+
+.roll,
+.entry-amt,
+.entry-bal,
+.st-end,
+.st-sub,
+.group-total,
+.result-line b,
+.trow > :not(:first-child),
+.bar-top b,
+.list-head span:last-child,
+.mr-main small,
+.month-row > b,
+.set-main small,
+.amount > span,
+.field input[inputmode='numeric'] {
+  font-family: var(--num);
+}
+
+.mono {
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: -0.2px;
+}
+.build-line {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink3);
+  letter-spacing: 0;
+  text-align: center;
+}
+
+/* category colours read a little stronger than the swatch they were picked from */
+.dot,
+.swatch {
+  filter: saturate(1.7) brightness(0.93);
+}
+.cat-card .dot {
+  width: 10px;
+  height: 10px;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cat) 26%, transparent);
 }

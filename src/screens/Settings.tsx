@@ -1,4 +1,5 @@
 import { useRef, useState, type ReactNode } from 'react';
+import { APP_VERSION, BUILD_SHA, BUILD_TIME } from '../build';
 import { balancesNow, entryCountFor, liveEntries } from '../calc';
 import { shortDate, todayISO } from '../format';
 import { downloadFile, parseImport, useDB, useStore } from '../store';
@@ -11,8 +12,6 @@ import { engine } from '../sync/engine';
 import { syncLabel, useSession, useSyncState } from '../sync/hooks';
 import { AccountLogo, accountTone, logoSlug } from '../components/AccountLogo';
 
-declare const __APP_VERSION__: string;
-export const APP_VERSION = typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : 'dev';
 
 const BACKUP_KEY = 'cashory.lastBackup';
 function lastBackup(): string | null {
@@ -322,7 +321,14 @@ export function About() {
         <section className="card">
           <div className="kv">
             <span>Version</span>
-            <b>{APP_VERSION}</b>
+            <b className="mono">{APP_VERSION}</b>
+          </div>
+          <div className="kv">
+            <span>Build</span>
+            <b className="mono">
+              {BUILD_SHA}
+              {BUILD_TIME ? ' · ' + BUILD_TIME : ''}
+            </b>
           </div>
           <div className="kv">
             <span>Entries</span>

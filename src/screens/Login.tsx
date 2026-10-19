@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { signIn } from '../sync/api';
+import { BUILD_LINE } from '../build';
 
 export function Login() {
   const [email, setEmail] = useState('');
@@ -41,6 +42,7 @@ export function Login() {
         </button>
         <p className="login-foot">Stays signed in on this device.</p>
       </form>
+      <p className="build-line">{BUILD_LINE}</p>
     </div>
   );
 }
