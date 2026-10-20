@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ALL_TIME, accountTotals, byDateAsc, categoryTotals, liveEntries, monthRange, statement, type Range, type Totals } from '../calc';
+import { ALL_TIME, accountTotals, byDateAsc, categoryTotals, liveEntries, monthRange, recentEntries, recordedDay, statement, type Range, type Totals } from '../calc';
 import { addMonths, dayLabel, money, monthKey, monthName, noteKey, signed, todayISO } from '../format';
 import type { Entry } from '../types';
 import { useDB } from '../store';
@@ -28,7 +28,93 @@ function lastDay(m: string) {
  * - A category or account picked: its statement card, then the month's In, Out and moves.
  * URL: m=YYYY-MM (default this month, "all" for every month), by=acc, c=category, a=account, q=search.
  */
+/** Entries tab: Recent (every record, newest first, with its time) or the monthly statement. */
 export function Entries({ query }: { query: URLSearchParams }) {
+  return query.get('v') === 'recent' ? <RecentEntries query={query} /> : <Statement query={query} />;
+}
+
+function ViewSeg({ view }: { view: 'recent' | 'cat' | 'acc' }) {
+  const { go } = useUI();
+  const btn = (v: typeof view, label: string, to: string) => (
+    <button type="button" role="radio" aria-checked={view === v} className={'seg-btn' + (view === v ? ' on' : '')} onClick={() => go(to)}>
+      {label}
+    </button>
+  );
+  return (
+    <div className="seg" role="radiogroup" aria-label="Show">
+      {btn('recent', 'Recent', '/entries?v=recent')}
+      {btn('cat', 'Categories', '/entries')}
+      {btn('acc', 'Accounts', '/entries?by=acc')}
+    </div>
+  );
+}
+
+const RECENT_PAGE = 60;
+
+function RecentEntries({ query }: { query: URLSearchParams }) {
+  const db = useDB();
+  const { go } = useUI();
+  const [q, setQ] = useState('');
+  const [limit, setLimit] = useState(RECENT_PAGE);
+  const catId = query.get('c');
+  const qKey = noteKey(q);
+  const list = useMemo(
+    () => recentEntries(db).filter((e) => (!catId || e.categoryId === catId || e.toCategoryId === catId) && (!qKey || noteKey(e.note).includes(qKey))),
+    [db, catId, qKey],
+  );
+  const shown = list.slice(0, limit);
+  const cats = db.categories.filter((c) => !c.archived || c.id === catId).sort((a, b) => a.sort - b.sort);
+
+  return (
+    <>
+      <TopBar title="Entries" subtitle="Recent" />
+      <main className="page">
+        <ViewSeg view="recent" />
+        <div className="chips scroll" role="radiogroup" aria-label="Category">
+          <button type="button" role="radio" aria-checked={!catId} className={'chip' + (!catId ? ' on' : '')} onClick={() => go('/entries?v=recent')}>
+            All
+          </button>
+          {cats.map((c) => (
+            <button key={c.id} type="button" role="radio" aria-checked={catId === c.id} className={'chip' + (catId === c.id ? ' on' : '')} onClick={() => go('/entries?v=recent&c=' + c.id)}>
+              <span className="dot" style={{ background: c.color }} />
+              {c.name}
+            </button>
+          ))}
+        </div>
+        <label className="search">
+          <IconSearch />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search notes" aria-label="Search notes" enterKeyHint="search" />
+          {q && (
+            <button type="button" aria-label="Clear search" onClick={() => setQ('')}>
+              <IconX />
+            </button>
+          )}
+        </label>
+        {list.length === 0 && <p className="empty">{q ? `Nothing matches “${q}”.` : 'No entries yet.'}</p>}
+        {shown.length > 0 && (
+          <section className="card list">
+            {shown.map((e, i) => {
+              const day = recordedDay(e);
+              return (
+                <div key={e.id} className="dated">
+                  {(i === 0 || recordedDay(shown[i - 1]) !== day) && <div className="date-tag">{dayLabel(day)}</div>}
+                  <EntryRow db={db} entry={e} categoryId={catId ?? undefined} recorded last={i === shown.length - 1} />
+                </div>
+              );
+            })}
+          </section>
+        )}
+        {list.length > limit && (
+          <button type="button" className="more-btn block" onClick={() => setLimit((l) => l + RECENT_PAGE)}>
+            Show older ({list.length - limit} more)
+          </button>
+        )}
+      </main>
+    </>
+  );
+}
+
+function Statement({ query }: { query: URLSearchParams }) {
   const db = useDB();
   const { go, hide } = useUI();
   const [q, setQ] = useState(query.get('q') ?? '');
@@ -130,14 +216,7 @@ export function Entries({ query }: { query: URLSearchParams }) {
           </div>
         )}
 
-        <div className="seg" role="radiogroup" aria-label="Statement by">
-          <button type="button" role="radio" aria-checked={!byAcc} className={'seg-btn' + (!byAcc ? ' on' : '')} onClick={() => nav({ by: null, a: null, c: null })}>
-            Categories
-          </button>
-          <button type="button" role="radio" aria-checked={byAcc} className={'seg-btn' + (byAcc ? ' on' : '')} onClick={() => nav({ by: 'acc', a: null, c: null })}>
-            Accounts
-          </button>
-        </div>
+        <ViewSeg view={byAcc ? 'acc' : 'cat'} />
 
         <div className="chips scroll" role="radiogroup" aria-label={byAcc ? 'Account' : 'Category'}>
           <button type="button" role="radio" aria-checked={!st} className={'chip' + (!st ? ' on' : '')} onClick={() => nav(byAcc ? { a: null } : { c: null })}>

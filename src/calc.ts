@@ -295,3 +295,24 @@ export function entryCountFor(db: DB, opts: { categoryId?: string; accountId?: s
     opts.categoryId ? e.categoryId === opts.categoryId || e.toCategoryId === opts.categoryId : e.accountId === opts.accountId || e.toAccountId === opts.accountId,
   ).length;
 }
+
+/** Entries brought in from the Numbers sheet carry no real time of recording. */
+export function isImported(e: Entry): boolean {
+  return e.id.startsWith('imp-');
+}
+
+/** The day an entry was recorded on (imported ones: their own date). */
+export function recordedDay(e: Entry): string {
+  return isImported(e) ? e.date : localDay(e.createdAt);
+}
+
+function localDay(iso: string): string {
+  const d = new Date(iso);
+  const p = (x: number) => String(x).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+/** Every live entry, the most recently recorded first. */
+export function recentEntries(db: DB): Entry[] {
+  return liveEntries(db).sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0));
+}

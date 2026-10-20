@@ -5,6 +5,7 @@ import { useDB, useStore } from '../store';
 import { useUI } from '../ui';
 import { TopBar } from '../components/TopBar';
 import { AccountLogo, logoSlug } from '../components/AccountLogo';
+import { ACCOUNT_GRADIENTS, accountGradient, accountTitle } from '../accountColors';
 
 export function EditAccount({ id }: { id: string }) {
   const db = useDB();
@@ -12,6 +13,8 @@ export function EditAccount({ id }: { id: string }) {
   const { back, toast } = useUI();
   const existing = db.accounts.find((a) => a.id === id);
   const [name, setName] = useState(existing?.name ?? '');
+  const [color, setColor] = useState(existing?.color ?? '');
+  const grad = accountGradient({ name: name || 'x', color });
 
   const clash = db.accounts.some((a) => a.id !== id && !a.archived && a.name.trim().toLowerCase() === name.trim().toLowerCase());
   const valid = name.trim().length > 0 && !clash;
@@ -21,7 +24,7 @@ export function EditAccount({ id }: { id: string }) {
 
   function save() {
     if (!valid) return;
-    saveAccount({ id: existing?.id ?? uid(), name: name.trim(), sort: existing?.sort ?? 0, archived: existing?.archived ?? false });
+    saveAccount({ id: existing?.id ?? uid(), name: name.trim(), sort: existing?.sort ?? 0, archived: existing?.archived ?? false, color: grad.id });
     toast({ text: existing ? 'Account saved' : `Added ${name.trim()}` });
     done();
   }
@@ -45,12 +48,22 @@ export function EditAccount({ id }: { id: string }) {
         }
       />
       <main className="page form">
-        <section className="card logo-preview">
-          <AccountLogo key={logoSlug(name)} name={name || '?'} size={64} />
-          <small>
-            Logo file: <b>public/logos/{logoSlug(name) || 'name'}.png</b>
-          </small>
+        <section className="bank-card preview" style={{ background: grad.grad, boxShadow: `0 16px 30px -16px ${grad.shadow}` }}>
+          <span className="bc-top">
+            <AccountLogo key={logoSlug(name)} name={name || '?'} size={36} />
+            <b>{accountTitle(name.trim() || 'Account')}</b>
+          </span>
+          <span className="bc-label">Logo file: public/logos/{logoSlug(name) || 'name'}.png</span>
         </section>
+
+        <div className="field">
+          <span>Card colour</span>
+          <div className="swatches grad" role="radiogroup" aria-label="Card colour">
+            {ACCOUNT_GRADIENTS.map((g) => (
+              <button key={g.id} type="button" role="radio" aria-label={g.name} aria-checked={grad.id === g.id} className={'swatch' + (grad.id === g.id ? ' on' : '')} style={{ background: g.grad }} onClick={() => setColor(g.id)} />
+            ))}
+          </div>
+        </div>
 
         <label className="field">
           <span>Name</span>

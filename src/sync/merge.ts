@@ -17,7 +17,7 @@ const t = (s: string | null | undefined) => (s ? Date.parse(s) : 0);
 export function toRemote(table: Table, row: Account | Category | Entry, userId: string, deletedAt: string | null = null): Remote {
   if (table === 'accounts') {
     const a = row as Account;
-    return { user_id: userId, id: a.id, name: a.name, sort: a.sort, archived: a.archived, updated_at: stamp(a), deleted_at: deletedAt };
+    return { user_id: userId, id: a.id, name: a.name, sort: a.sort, archived: a.archived, color: a.color ?? null, updated_at: stamp(a), deleted_at: deletedAt };
   }
   if (table === 'categories') {
     const c = row as Category;
@@ -53,7 +53,7 @@ export function toRemote(table: Table, row: Account | Category | Entry, userId: 
 }
 
 export function fromRemote(table: Table, r: Remote): Account | Category | Entry {
-  if (table === 'accounts') return { id: r.id, name: r.name, sort: r.sort, archived: r.archived, updatedAt: r.updated_at } as Account;
+  if (table === 'accounts') return { id: r.id, name: r.name, sort: r.sort, archived: r.archived, ...(r.color ? { color: r.color } : {}), updatedAt: r.updated_at } as Account;
   if (table === 'categories')
     return {
       id: r.id,

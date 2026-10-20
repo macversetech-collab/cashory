@@ -1,31 +1,37 @@
-import { useMemo } from 'react';
-import { balancesNow, monthRange, summary } from '../calc';
+import { useMemo, useState } from 'react';
+import { balancesNow, monthRange, recentEntries, summary } from '../calc';
+import { EntryRow } from '../components/EntryRow';
+import { BankCards } from '../components/BankCards';
 import { longToday, monthKey, todayISO } from '../format';
 import { useDB } from '../store';
 import { useUI } from '../ui';
 import { cloudEnabled } from '../sync/api';
 import { engine } from '../sync/engine';
 import { syncLabel, useSyncState } from '../sync/hooks';
-import { IconEye, IconEyeOff, IconNext, IconSettings } from '../components/Icons';
+import { IconNext, IconSettings } from '../components/Icons';
 import { TopBar } from '../components/TopBar';
-import { AccountLogo, accountTone } from '../components/AccountLogo';
+import { accountTone } from '../components/AccountLogo';
 import { Num } from '../components/RollingNumber';
 
 export function Home() {
   const db = useDB();
-  const { hide, toggleHide } = useUI();
+  const { hide, toggleHide, go } = useUI();
   const label = syncLabel(useSyncState());
 
   const { categories: catBal, accounts: accBal } = useMemo(() => balancesNow(db), [db]);
   const month = monthKey(todayISO());
   const sum = useMemo(() => summary(db, monthRange(month)), [db, month]);
+  const recent = useMemo(() => recentEntries(db).slice(0, 5), [db]);
 
   const cats = db.categories.filter((c) => !c.archived).sort((a, b) => a.sort - b.sort);
   // Accounts with no money in them stay off Home (they are still in Settings and Reports).
-  const accounts = db.accounts
-    .filter((a) => !a.archived && (accBal.get(a.id)?.end ?? 0) !== 0)
-    .sort((a, b) => a.sort - b.sort);
-  const hiddenCount = db.accounts.filter((a) => !a.archived).length - accounts.length;
+  const open = db.accounts.filter((a) => !a.archived).sort((a, b) => a.sort - b.sort);
+  const withMoney = open.filter((a) => (accBal.get(a.id)?.end ?? 0) !== 0);
+  const accounts = withMoney.length ? withMoney : open;
+  const hiddenCount = open.length - accounts.length;
+  const [cardIdx, setCardIdx] = useState(0);
+  const current = accounts[Math.min(cardIdx, Math.max(0, accounts.length - 1))];
+  const shownCats = current ? cats.filter((c) => c.accountId === current.id) : cats;
   const accName = (id: string) => db.accounts.find((a) => a.id === id)?.name;
   const monthName = new Date().toLocaleString('en-US', { month: 'long' });
 
@@ -51,43 +57,32 @@ export function Home() {
         }
       />
       <main className="page">
-        <section className="hero" aria-labelledby="acc-h">
-          <div className="hero-top">
-            <h2 id="acc-h">Accounts</h2>
-            <button type="button" className="hero-eye" aria-label={hide ? 'Show balances' : 'Hide balances'} onClick={toggleHide}>
-              {hide ? <IconEyeOff /> : <IconEye />}
-            </button>
-          </div>
-          {accounts.length === 0 && <p className="hero-empty">No money in any account yet.</p>}
-          {accounts.map((a) => {
-            const names = cats.filter((c) => c.accountId === a.id).map((c) => c.name);
-            const bal = accBal.get(a.id)?.end ?? 0;
-            return (
-              <a key={a.id} href={'#/entries?a=' + a.id} className="acc-row">
-                <AccountLogo name={a.name} size={42} />
-                <span className="acc-main">
-                  <span className="acc-name">{a.name}</span>
-                  {names.length > 0 && <span className="acc-cats">{names.join(' · ')}</span>}
-                </span>
-                <span className={'acc-bal' + (bal < 0 ? ' neg' : '')}>
-                  <Num v={bal} />
-                </span>
-              </a>
-            );
-          })}
-          {hiddenCount > 0 && (
-            <a href="#/settings/accounts" className="hero-foot">
-              {hiddenCount} empty {hiddenCount === 1 ? 'account' : 'accounts'} hidden
-            </a>
-          )}
-        </section>
+        {accounts.length > 0 ? (
+          <BankCards
+            accounts={accounts}
+            index={Math.min(cardIdx, accounts.length - 1)}
+            onIndex={setCardIdx}
+            balance={(id) => accBal.get(id)?.end ?? 0}
+            catCount={(id) => cats.filter((c) => c.accountId === id).length}
+            hide={hide}
+            onToggleHide={toggleHide}
+            onOpen={(id) => go('/entries?a=' + id)}
+          />
+        ) : (
+          <p className="hero-empty">Add an account in Settings to start.</p>
+        )}
+        {hiddenCount > 0 && (
+          <a href="#/settings/accounts" className="deck-note">
+            {hiddenCount} empty {hiddenCount === 1 ? 'account' : 'accounts'} hidden
+          </a>
+        )}
 
         <div className="section-head">
           <h2>Categories</h2>
           <a href="#/settings/categories">Manage</a>
         </div>
         <div className="cat-grid">
-          {cats.map((c) => {
+          {shownCats.map((c) => {
             const bal = catBal.get(c.id)?.end ?? 0;
             return (
               <a key={c.id} href={'#/c/' + c.id} className="cat-card" style={{ ['--cat' as string]: c.color }}>
@@ -103,6 +98,20 @@ export function Home() {
             );
           })}
         </div>
+
+        {recent.length > 0 && (
+          <>
+            <div className="section-head">
+              <h2>Recent</h2>
+              <a href="#/entries?v=recent">See all</a>
+            </div>
+            <section className="card list">
+              {recent.map((e, i) => (
+                <EntryRow key={e.id} db={db} entry={e} recorded last={i === recent.length - 1} />
+              ))}
+            </section>
+          </>
+        )}
 
         <a href={'#/reports?m=' + month} className="card month-card">
           <div className="card-head">

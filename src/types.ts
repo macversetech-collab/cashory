@@ -5,6 +5,8 @@ export interface Account {
   name: string;
   sort: number;
   archived: boolean;
+  /** Card gradient id (see accountColors.ts); empty = picked from the name. */
+  color?: string;
   updatedAt?: string;
 }
 

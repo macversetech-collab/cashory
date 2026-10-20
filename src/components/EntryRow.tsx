@@ -1,5 +1,6 @@
 import type { DB, Entry } from '../types';
-import { signed, shortDate } from '../format';
+import { clock12, dayOf, shortDate, signed, whenLabel } from '../format';
+import { isImported } from '../calc';
 import { useUI } from '../ui';
 
 interface Props {
@@ -11,10 +12,12 @@ interface Props {
   accountId?: string;
   balanceAfter?: number;
   showDate?: boolean;
+  /** Show when it was recorded (right side), plus "for <date>" and "edited" when they apply. */
+  recorded?: boolean;
   last?: boolean;
 }
 
-export function EntryRow({ db, entry: e, categoryId, accountId, balanceAfter, showDate, last }: Props) {
+export function EntryRow({ db, entry: e, categoryId, accountId, balanceAfter, showDate, recorded, last }: Props) {
   const { openSheet, hide } = useUI();
   const cat = (id: string | null) => db.categories.find((c) => c.id === id)?.name ?? '—';
   const acc = (id: string | null) => db.accounts.find((a) => a.id === id)?.name ?? '—';
@@ -38,6 +41,16 @@ export function EntryRow({ db, entry: e, categoryId, accountId, balanceAfter, sh
     parts.push(acc(e.accountId));
   }
 
+  let when = '';
+  if (recorded) {
+    if (isImported(e)) when = shortDate(e.date);
+    else {
+      when = whenLabel(e.createdAt);
+      if (dayOf(e.createdAt) !== e.date) parts.push('for ' + shortDate(e.date));
+      if (e.updatedAt && Date.parse(e.updatedAt) - Date.parse(e.createdAt) > 60_000) parts.push('edited ' + clock12(new Date(e.updatedAt)));
+    }
+  }
+
   const amountText = hide ? '•••••' : e.type === 'move' && !signedMove ? e.amount.toLocaleString('en-US') : signed(delta);
   const color = e.type === 'move' && !signedMove ? 'var(--muted)' : delta > 0 ? 'var(--in)' : 'var(--out)';
 
@@ -50,6 +63,7 @@ export function EntryRow({ db, entry: e, categoryId, accountId, balanceAfter, sh
       </span>
       <span className="entry-right">
         <span className="entry-amt" style={{ color }}>{amountText}</span>
+        {when && <span className="entry-when">{when}</span>}
         {balanceAfter !== undefined && <span className="entry-bal">{hide ? '•••••' : signed(balanceAfter).replace('+', '')}</span>}
       </span>
     </button>

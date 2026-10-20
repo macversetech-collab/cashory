@@ -11,11 +11,13 @@ create table if not exists public.cashory_accounts (
   name       text not null,
   sort       int  not null default 0,
   archived   boolean not null default false,
+  color      text,
   updated_at timestamptz not null default now(),
   deleted_at timestamptz,
   synced_at  timestamptz not null default now(),
   primary key (user_id, id)
 );
+alter table public.cashory_accounts add column if not exists color text;
 
 create table if not exists public.cashory_categories (
   user_id          uuid not null default auth.uid() references auth.users(id) on delete cascade,

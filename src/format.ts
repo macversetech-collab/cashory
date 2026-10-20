@@ -74,3 +74,24 @@ export function uid(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();
   return 'id-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
 }
+
+/** 12-hour clock, e.g. "7:12 PM". */
+export function clock12(d: Date): string {
+  const h = d.getHours();
+  return `${h % 12 || 12}:${String(d.getMinutes()).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
+}
+
+/** The local day an ISO timestamp falls on (YYYY-MM-DD). */
+export function dayOf(iso: string): string {
+  return localISO(new Date(iso));
+}
+
+/** "Today 7:12 PM", "Yesterday 8:30 AM", "18 Oct 2:05 PM". */
+export function whenLabel(iso: string): string {
+  const d = new Date(iso);
+  const day = localISO(d);
+  const y = new Date();
+  y.setDate(y.getDate() - 1);
+  const dl = day === todayISO() ? 'Today' : day === localISO(y) ? 'Yesterday' : shortDate(day);
+  return `${dl} ${clock12(d)}`;
+}

@@ -82,6 +82,10 @@ export function Reports({ query }: { query: URLSearchParams }) {
       )}
 
       <section className="hero">
+        <div className="hero-top">
+          <h2>All accounts</h2>
+          <span className="hero-chip">{mode === 'all' ? 'All time' : monthName(month)}</span>
+        </div>
         <div className="stat3">
           <div>
             <span>In</span>
