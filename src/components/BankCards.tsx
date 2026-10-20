@@ -1,6 +1,6 @@
 import { useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import type { Account } from '../types';
-import { accountGradient, accountTitle } from '../accountColors';
+import { accountGradient, accountPattern, accountTitle } from '../accountColors';
 import { AccountLogo } from './AccountLogo';
 import { IconEye, IconEyeOff } from './Icons';
 import { Num } from './RollingNumber';
@@ -82,7 +82,7 @@ export function BankCards({ accounts, index, onIndex, balance, catCount, hide, o
           return (
             <div
               key={a.id}
-              className={'bank-card' + (isFront && drag && !fly ? ' dragging' : '')}
+              className={'bank-card pat-' + accountPattern(a) + (isFront && drag && !fly ? ' dragging' : '')}
               style={{ background: g.grad, boxShadow: isFront ? `0 18px 32px -16px ${g.shadow}` : 'none', transform, zIndex: fly ? n + 1 : n - pos, opacity: pos < 3 || fly ? 1 : 0 }}
               role={isFront ? 'button' : undefined}
               tabIndex={isFront ? 0 : -1}

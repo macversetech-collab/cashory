@@ -2427,14 +2427,45 @@ b {
 .bank-card::after {
   content: '';
   position: absolute;
-  right: -34px;
-  bottom: -46px;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+/* Rings: two faint circles like a card network mark */
+.bank-card.pat-rings::after {
+  inset: auto -34px -46px auto;
   width: 170px;
   height: 170px;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: -46px -10px 0 -1px rgba(255, 255, 255, 0.05);
-  z-index: -1;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: -46px -10px 0 -1px rgba(255, 255, 255, 0.06);
+}
+/* Waves: soft swells along the bottom */
+.bank-card.pat-waves::after {
+  background:
+    radial-gradient(120% 60% at 20% 118%, rgba(255, 255, 255, 0.16) 0 48%, transparent 49%),
+    radial-gradient(110% 55% at 90% 128%, rgba(255, 255, 255, 0.12) 0 50%, transparent 51%);
+}
+/* Glow: two blurred light blobs */
+.bank-card.pat-glow::after {
+  background:
+    radial-gradient(45% 60% at 88% 12%, rgba(255, 255, 255, 0.28), transparent 70%),
+    radial-gradient(50% 60% at 6% 100%, rgba(255, 255, 255, 0.16), transparent 70%);
+}
+/* Lines: fine diagonal stripes, strongest on the right */
+.bank-card.pat-lines::after {
+  background: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0 1px, transparent 1px 12px);
+  -webkit-mask-image: linear-gradient(90deg, transparent 20%, #000 90%);
+  mask-image: linear-gradient(90deg, transparent 20%, #000 90%);
+}
+/* Dots: a small dot grid fading in from the right */
+.bank-card.pat-dots::after {
+  background: radial-gradient(rgba(255, 255, 255, 0.2) 1px, transparent 1.6px) 0 0 / 14px 14px;
+  -webkit-mask-image: linear-gradient(90deg, transparent 35%, #000 95%);
+  mask-image: linear-gradient(90deg, transparent 35%, #000 95%);
+}
+.bank-card.pat-plain::after {
+  display: none;
 }
 .bc-top {
   display: flex;
@@ -2524,4 +2555,37 @@ b {
   .bank-card {
     transition: none;
   }
+}
+
+.patterns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.pattern-opt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink2);
+}
+.pattern-opt.on {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+  color: var(--ink);
+}
+.bank-card.mini {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  height: 46px;
+  border-radius: 10px;
+  padding: 0;
+  cursor: inherit;
 }

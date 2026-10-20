@@ -5,7 +5,7 @@ import { useDB, useStore } from '../store';
 import { useUI } from '../ui';
 import { TopBar } from '../components/TopBar';
 import { AccountLogo, logoSlug } from '../components/AccountLogo';
-import { ACCOUNT_GRADIENTS, accountGradient, accountTitle } from '../accountColors';
+import { ACCOUNT_GRADIENTS, CARD_PATTERNS, accountGradient, accountPattern, accountTitle, packCardStyle } from '../accountColors';
 
 export function EditAccount({ id }: { id: string }) {
   const db = useDB();
@@ -15,6 +15,7 @@ export function EditAccount({ id }: { id: string }) {
   const [name, setName] = useState(existing?.name ?? '');
   const [color, setColor] = useState(existing?.color ?? '');
   const grad = accountGradient({ name: name || 'x', color });
+  const pattern = accountPattern({ color });
 
   const clash = db.accounts.some((a) => a.id !== id && !a.archived && a.name.trim().toLowerCase() === name.trim().toLowerCase());
   const valid = name.trim().length > 0 && !clash;
@@ -24,7 +25,7 @@ export function EditAccount({ id }: { id: string }) {
 
   function save() {
     if (!valid) return;
-    saveAccount({ id: existing?.id ?? uid(), name: name.trim(), sort: existing?.sort ?? 0, archived: existing?.archived ?? false, color: grad.id });
+    saveAccount({ id: existing?.id ?? uid(), name: name.trim(), sort: existing?.sort ?? 0, archived: existing?.archived ?? false, color: packCardStyle(grad.id, pattern) });
     toast({ text: existing ? 'Account saved' : `Added ${name.trim()}` });
     done();
   }
@@ -48,7 +49,7 @@ export function EditAccount({ id }: { id: string }) {
         }
       />
       <main className="page form">
-        <section className="bank-card preview" style={{ background: grad.grad, boxShadow: `0 16px 30px -16px ${grad.shadow}` }}>
+        <section className={'bank-card preview pat-' + pattern} style={{ background: grad.grad, boxShadow: `0 16px 30px -16px ${grad.shadow}` }}>
           <span className="bc-top">
             <AccountLogo key={logoSlug(name)} name={name || '?'} size={36} />
             <b>{accountTitle(name.trim() || 'Account')}</b>
@@ -60,7 +61,19 @@ export function EditAccount({ id }: { id: string }) {
           <span>Card colour</span>
           <div className="swatches grad" role="radiogroup" aria-label="Card colour">
             {ACCOUNT_GRADIENTS.map((g) => (
-              <button key={g.id} type="button" role="radio" aria-label={g.name} aria-checked={grad.id === g.id} className={'swatch' + (grad.id === g.id ? ' on' : '')} style={{ background: g.grad }} onClick={() => setColor(g.id)} />
+              <button key={g.id} type="button" role="radio" aria-label={g.name} aria-checked={grad.id === g.id} className={'swatch' + (grad.id === g.id ? ' on' : '')} style={{ background: g.grad }} onClick={() => setColor(packCardStyle(g.id, pattern))} />
+            ))}
+          </div>
+        </div>
+
+        <div className="field">
+          <span>Card design</span>
+          <div className="patterns" role="radiogroup" aria-label="Card design">
+            {CARD_PATTERNS.map((p) => (
+              <button key={p.id} type="button" role="radio" aria-checked={pattern === p.id} className={'pattern-opt' + (pattern === p.id ? ' on' : '')} onClick={() => setColor(packCardStyle(grad.id, p.id))}>
+                <span className={'bank-card mini pat-' + p.id} style={{ background: grad.grad }} />
+                {p.name}
+              </button>
             ))}
           </div>
         </div>

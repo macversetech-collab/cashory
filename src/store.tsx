@@ -91,6 +91,7 @@ interface Store {
   saveCategory(c: Category): void;
   deleteCategory(id: string): void;
   moveCategory(id: string, dir: -1 | 1): void;
+  moveAccount(id: string, dir: -1 | 1): void;
   saveAccount(a: Account): void;
 }
 
@@ -171,6 +172,26 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           const t = now();
           engine.tombstone('categories', toRemote('categories', { ...row, updatedAt: t }, '', t));
         }
+      },
+      moveAccount: (id, dir) => {
+        const changed: string[] = [];
+        update((d) => {
+          const list = [...d.accounts].sort((a, b) => a.sort - b.sort);
+          const i = list.findIndex((a) => a.id === id);
+          const j = i + dir;
+          if (i < 0 || j < 0 || j >= list.length) return d;
+          [list[i], list[j]] = [list[j], list[i]];
+          const t = now();
+          return {
+            ...d,
+            accounts: list.map((a, k) => {
+              if (a.sort === k + 1) return a;
+              changed.push(a.id);
+              return { ...a, sort: k + 1, updatedAt: t };
+            }),
+          };
+        });
+        if (changed.length) engine.touch('accounts', changed);
       },
       moveCategory: (id, dir) => {
         const changed: string[] = [];

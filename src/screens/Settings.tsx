@@ -62,6 +62,7 @@ export function SettingsHome() {
 export function SettingsAccounts() {
   const db = useDB();
   const m = useMoney();
+  const { moveAccount } = useStore();
   const bal = balancesNow(db);
   const accounts = db.accounts.slice().sort((a, b) => a.sort - b.sort);
   const active = db.categories.filter((c) => !c.archived);
@@ -70,19 +71,29 @@ export function SettingsAccounts() {
       <TopBar title="Accounts" back="#/settings" backLabel="Settings" />
       <main className="page">
         <section className="card group">
-          {accounts.map((a) => {
+          {accounts.map((a, i) => {
             const n = active.filter((c) => c.accountId === a.id).length;
             return (
-              <a key={a.id} href={'#/settings/a/' + a.id} className={'set-row' + (a.archived ? ' dim' : '')}>
-                <AccountLogo name={a.name} size={36} />
-                <span className="set-main">
-                  <b>{a.name}</b>
-                  <small>
-                    {a.archived ? 'Archived' : n === 1 ? '1 category' : `${n} categories`} · {m(bal.accounts.get(a.id)?.end ?? 0)}
-                  </small>
-                </span>
-                <IconNext size={17} />
-              </a>
+              <div key={a.id} className={'set-row' + (a.archived ? ' dim' : '')}>
+                <div className="reorder">
+                  <button type="button" aria-label={`Move ${a.name} up`} disabled={i === 0} onClick={() => moveAccount(a.id, -1)}>
+                    <IconUp />
+                  </button>
+                  <button type="button" aria-label={`Move ${a.name} down`} disabled={i === accounts.length - 1} onClick={() => moveAccount(a.id, 1)}>
+                    <IconDown />
+                  </button>
+                </div>
+                <a href={'#/settings/a/' + a.id} className="set-link">
+                  <AccountLogo name={a.name} size={36} />
+                  <span className="set-main">
+                    <b>{a.name}</b>
+                    <small>
+                      {a.archived ? 'Archived' : n === 1 ? '1 category' : `${n} categories`} · {m(bal.accounts.get(a.id)?.end ?? 0)}
+                    </small>
+                  </span>
+                  <IconNext size={17} />
+                </a>
+              </div>
             );
           })}
           <a href="#/settings/a/new" className="set-row add">
@@ -93,7 +104,7 @@ export function SettingsAccounts() {
           </a>
         </section>
         <p className="group-note">
-          Accounts with a 0 balance are hidden on Home. Logos come from <b>public/logos/</b>: {accounts.map((a) => logoSlug(a.name) + '.png').join(', ')}.
+          The order here is the order of the cards on Home. Accounts with a 0 balance are hidden on Home. Logos come from <b>public/logos/</b>: {accounts.map((a) => logoSlug(a.name) + '.png').join(', ')}.
         </p>
       </main>
     </>
